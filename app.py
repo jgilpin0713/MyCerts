@@ -6,7 +6,7 @@ from forms import Login_Form, User_Form, Cert_Form, Training_Form, Location_Form
 from flask_debugtoolbar import DebugToolbarExtension
 from sqlalchemy.exc import IntegrityError
 from datetime import datetime
-import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt, mpld3
 
 
 CURR_USER_KEY = "curr_user"
@@ -156,8 +156,9 @@ def display_hours(user_id):
     sizes = [user.completed, user.required]
 
     plt.axis("equal")
-    plt.pie(sizes, labels = labels, radius = 2, autopct = '%0.0f%%')
-    graph = plt.show()
+    plt.pie(sizes, labels = labels, autopct = '%0.0f%%')
+    graph = mpld3.show()
+
 
 
     return render_template("users/display_hours.html", user = user, graph = graph)
