@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+
+{% block content %}
+
+<h1> Edit {{user.first_name}} {{user.last_name}}</h1>
+
+<div class="container">
+    <h1 class="display-1 text-center">Edit {{user.first_name}} {{user.last_name}}</h1>
+    <div class="row justify-content-center">
+      <div class="col-md-8">
+
+      <form method="POST">
+        {{ form.hidden_tag() }}
+        {% for field in form if field.widget.input_type != 'hidden'%}
+        <div class="form-group">
+          {{field.label}}
+          {{field}}
+          {% for err in field.errors %}
+          <small class="form-text text-danger"></small>
+            {{err}}
+          </small>
+        {% endfor %}
+        </div>
+        {% endfor %}
+        <button class ="btn btn-success btn-lg">Save</button>
+        <a href="/administrator" class="btn btn-danger btn-lg">Go Back</a>
+       </form>
+      </div>
+    </div>
+  </div>
+
+{% endblock %}

@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+
+{% block content %}
+<ul>
+{% for user in users %}
+    <li>
+        <a href = "/ad/edit-user/{{user.id}}"> {{user.first_name}} {{user.last_name}}</a>
+    </li>  
+{% endfor %}  
+</ul>
+
+<ul>
+    {% for cert in certs %}
+        <li>
+            <a href = "/ad/edit-cert/{{cert.id}}"> {{cert.cert_name}}</a>
+        </li>  
+    {% endfor %}  
+</ul>
+
+
+<ul>
+    {% for location in locations %}
+        <li>
+            <a href = "/ad/edit-location/{{location.id}}"> {{location.site_name}} </a>
+        </li>  
+    {% endfor %}  
+</ul>
+
+
+<ul>
+    {% for train in training %}
+        <li>
+            <a href = "/ad/edit-training/{{train.id}}"> {{train.name}} </a>
+        </li>  
+    {% endfor %}  
+</ul>
+
+<div class = "container">
+    <h1 class = "display-1 text-center"> Welcome to MyCerts ADMIN!</h1>
+    <div class ="row justify-content-center">
+        <div class="d-grid gap-2 col-6 mx-auto">
+            <a class="btn btn-success" type="button" href = "/ad/add-location">Add Locations</a>
+    
+            <a class="btn btn-success" type="button" href = "/ad/add-cert">Add Certification</a>
+            
+            <a class="btn btn-primary" type="button" href = "/ad/add-user">Add Employee</a>
+            <a class="btn btn-success" type="button" href = "/ad/add-training">Add Training</a>
+            
+           
+        </div>
+    </div>
+</div>
+
+
+{% endblock %}

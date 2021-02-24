@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+
+{% block content %}
+
+
+
+<h1>Welcome {{user.first_name}} {{user.last_name}}!!</h1>
+
+
+{{user.username}}
+{{user.email}}
+{{user.hire_date}}
+{{user.admin}}
+{{user.location.site_name}}
+{{user.certs.cert_name}}
+{{user.completed}}
+{{user.required}}
+
+
+
+
+{% endblock %}
+

@@ -1,0 +1,16 @@
+
+{% extends "base.html" %}
+
+
+{% block content %}
+display hours
+
+{{user.completed}}
+
+{{user.required}}
+
+{{graph}}
+
+<a href="/mycerts/{user.id}" class="btn btn-danger">Go Back</a>
+
+{% endblock %}

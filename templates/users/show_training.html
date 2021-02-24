@@ -1,0 +1,24 @@
+
+{% extends "base.html" %}
+
+
+{% block content %}
+
+show training
+
+<ul>
+    {% for training in trainings %}
+        <li>
+             {{training.name}},
+             {{training.city}},
+             {{training.state}},
+             {{training.room}},
+             {{training.hour}}
+        </li>  
+    {% endfor %}  
+</ul>
+
+
+<a href="/mycerts/{user.id}" class="btn btn-danger">Go Back</a>
+
+{% endblock %}

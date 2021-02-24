@@ -1,0 +1,35 @@
+
+{% extends "base.html" %}
+
+
+{% block content %}
+<div class="row ">
+    <div class="col-md-8">
+      <h2 class="join-message">Add New Location</h2>
+
+      <form method="POST" id="add_location_form">
+        {{ form.hidden_tag() }}
+
+        {% for field in form if field.widget.input_type != 'hidden' %}
+        <div class = "form-group"> 
+          {{ field.label}}
+          {{field}}
+          {% for error in field.errors %}
+            <small class=" form-text text-danger">{{ error }}</small>
+          {% endfor %}
+          {% endfor %}
+          </div>
+          {% for msg in get_flashed_messages() %}
+          <p>
+            {{msg}}
+          </p>
+          {% endfor %}
+
+        <button class="btn btn-primary btn-block btn-lg">ADD!</button>
+        <a href = "/administration" class = "btn btn-danger">Go Back</a>
+      </form>
+    </div>
+  </div>
+</div> 
+
+{% endblock %}
