@@ -1,12 +1,11 @@
 import os
 
-from flask import Flask, render_template, redirect, request, session, g, flash
+from flask import Flask, render_template, redirect, request, session, g, flash, json
 from models import connect_db, db, Certs, Training, User, Location
 from forms import Login_Form, User_Form, Cert_Form, Training_Form, Location_Form, SignUp_Form, Edit_User_Form
 from flask_debugtoolbar import DebugToolbarExtension
 from sqlalchemy.exc import IntegrityError
 from datetime import datetime
-import matplotlib.pyplot as plt, mpld3
 
 
 CURR_USER_KEY = "curr_user"
@@ -108,7 +107,7 @@ def sign_up():
             flash("Email already in use", "danger")
             return render_template("sign-up.html", form = form)
         login(user)
-        return redirect (f"/mycerts/{user.id}")
+        return redirect ("/administrator")
 
     else:   
 
@@ -152,16 +151,10 @@ def display_hours(user_id):
     
     user = User.query.get_or_404(user_id)
 
-    labels = "Completed", "Required"
-    sizes = [user.completed, user.required]
-
-    plt.axis("equal")
-    plt.pie(sizes, labels = labels, autopct = '%0.0f%%')
-    graph = mpld3.show()
-
-
-
-    return render_template("users/display_hours.html", user = user, graph = graph)
+    labels = json.dumps( ["Completed", "Required"])
+    data = json.dumps([user.completed, user.required])
+ 
+    return render_template("users/display_hours.html", user = user, labels = labels, data = data)
 
 @app.route("/training")
 def display_training():
@@ -205,6 +198,9 @@ def add_employee():
         ##return redirect("/login")
 
     form = User_Form()
+    #form.location.choices = db.session.query(Location.id, Location.site_name).all()
+    
+    #form.certs.choices = db.session.query(Certs.id, Certs.cert_name).all()
 
     if form.validate_on_submit():
         try: 
@@ -217,14 +213,12 @@ def add_employee():
                 hire_date = form.hire_date.data, 
                 admin = form.admin.data,
                 completed = form.completed.data,
-                required = form.required.data
+                required = form.required.data,
+                #location = form.location.data,
+                #certs = form.certs.data
             )
 
-            location = Location(
-                location = form.location.data
-            )
             
-            db.session.add(location)
             db.session.add(user)
             db.session.commit()
         except IntegrityError:
@@ -358,8 +352,8 @@ def edit_employee(user_id):
     form.certs.choices = db.session.query(Certs.id, Certs.cert_name).all()
 
     if form.validate_on_submit():
-        user.username = form.username.data,
-        user.password = form.password.data, 
+        #user.username = form.username.data,
+        #user.password = form.password.data, 
         user.email = form.email.data, 
         user.first_name = form.first_name.data,
         user.last_name = form.last_name.data,
