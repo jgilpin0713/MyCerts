@@ -49,6 +49,19 @@ class User(db.Model):
         return user
 
     @classmethod
+    def password_reset(cls, username, password):
+        """Password RESET"""
+        hashed_pwd = bcrypt.generate_password_hash(password).decode("UTF-8")
+
+        user = User(
+            username = username,
+            password = hashed_pwd,
+        )
+
+        db.session.commit()
+        return user
+
+    @classmethod
     def authenticate(cls, username, password):
         """Validate that user and password are correct"""
         user = cls.query.filter_by(username=username).first()

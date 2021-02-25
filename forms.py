@@ -68,8 +68,6 @@ class SignUp_Form(FlaskForm):
 class Edit_User_Form(FlaskForm):
     """Form for setting up a new user"""
 
-    #username = StringField("Username", validators= [InputRequired(), Length(max = 25)])
-    #password = PasswordField("Password")
     email = StringField("Email", validators=[InputRequired(), Email(message="Invalid Email"), Length(max = 50)])
     first_name = StringField("First Name", validators=[InputRequired(), Length(max = 25)])
     last_name = StringField("Last Name", validators=[InputRequired(), Length (max = 30)])
@@ -79,3 +77,11 @@ class Edit_User_Form(FlaskForm):
     certs = SelectMultipleField("Certifications (Select all that Apply)", validators=[InputRequired()], coerce= int) ## choices are the certifications already added
     completed = IntegerField("Training Hours Completed", default = 0)
     required = IntegerField("Training Hours Required", validators=[InputRequired()])
+
+
+class Reset_Pwd_Form(FlaskForm):
+    """Resetting password form"""
+
+    username = StringField("Username", validators= [InputRequired(), Length(max = 25)])
+    password = PasswordField("Password", validators=[Length(min = 8, max = 80)])
+    email = StringField("Email", validators=[InputRequired(), Email(message="Invalid Email"), Length(max = 50)])

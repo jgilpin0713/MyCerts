@@ -2,7 +2,7 @@ import os
 
 from flask import Flask, render_template, redirect, request, session, g, flash, json
 from models import connect_db, db, Certs, Training, User, Location
-from forms import Login_Form, User_Form, Cert_Form, Training_Form, Location_Form, SignUp_Form, Edit_User_Form
+from forms import Login_Form, User_Form, Cert_Form, Training_Form, Location_Form, SignUp_Form, Edit_User_Form, Reset_Pwd_Form
 from flask_debugtoolbar import DebugToolbarExtension
 from sqlalchemy.exc import IntegrityError
 from datetime import datetime
@@ -122,6 +122,24 @@ def logout_user():
 
     return redirect("/login")
 
+@app.route("/password", methods = ["GET", "POST"])
+def reset_password():
+    """ Reset users password"""
+
+    form = Reset_Pwd_Form()
+    if form.validate_on_submit():
+        if form.email.data:
+            User.password_reset(
+                username = form.username.data,
+                password = form.password.data,
+            )
+        
+        flash("You have succesfully changed password!", "success")
+        return redirect("/login")
+
+    else:
+        return render_template("password.html", form=form)
+
 
 #######################################################################
 # user routes
@@ -177,6 +195,9 @@ def show_all_users():
     if not g.user:
         flash("Please login to access", "danger")
         return redirect("/")
+    if g.user.admin == False:
+        flash ("Unauthorized", "danger")
+        return redirect("/login")
 
     users = User.query.all()
     locations = Location.query.all()
@@ -193,9 +214,9 @@ def add_employee():
         flash("Please login to access", "danger")
         return redirect("/")
     
-    ##if g.user.admin == False:
-        ##flash ("Unauthorized", "danger")
-        ##return redirect("/login")
+    if g.user.admin == False:
+        flash ("Unauthorized", "danger")
+        return redirect("/login")
 
     form = User_Form()
     #form.location.choices = db.session.query(Location.id, Location.site_name).all()
@@ -240,9 +261,9 @@ def add_cert():
         flash("Please login to access", "danger")
         return redirect("/")
     
-    ##if g.user.admin == False:
-        ##flash ("Unauthorized", "danger")
-        ##return redirect("/login")
+    if g.user.admin == False:
+        flash ("Unauthorized", "danger")
+        return redirect("/login")
 
     form = Cert_Form()
 
@@ -274,9 +295,9 @@ def add_location():
         flash("Please login to access", "danger")
         return redirect("/")
     
-    ##if g.user.admin == False:
-        ##flash ("Unauthorized", "danger")
-        ##return redirect("/login")
+    if g.user.admin == False:
+        flash ("Unauthorized", "danger")
+        return redirect("/login")
     
     form = Location_Form()
 
@@ -307,9 +328,9 @@ def add_training():
         flash("Please login to access", "danger")
         return redirect("/")
     
-    ##if g.user.admin == False:
-        ##flash ("Unauthorized", "danger")
-        ##return redirect("/login")
+    if g.user.admin == False:
+        flash ("Unauthorized", "danger")
+        return redirect("/login")
 
     form = Training_Form()
 
@@ -340,9 +361,9 @@ def edit_employee(user_id):
         flash("Please login to access", "danger")
         return redirect("/")
     
-    ##if g.user.admin == False:
-        ##flash ("Unauthorized", "danger")
-        ##return redirect("/login")
+    if g.user.admin == False:
+        flash ("Unauthorized", "danger")
+        return redirect("/login")
 
     user = User.query.get_or_404(user_id)
     form = Edit_User_Form(obj = user)
@@ -380,9 +401,9 @@ def edit_cert(cert_id):
         flash("Please login to access", "danger")
         return redirect("/")
     
-    ##if g.user.admin == False:
-        ##flash ("Unauthorized", "danger")
-        ##return redirect("/login")
+    if g.user.admin == False:
+        flash ("Unauthorized", "danger")
+        return redirect("/login")
 
     cert = Certs.query.get_or_404(cert_id)
     form = Cert_Form(obj=cert)
@@ -408,9 +429,9 @@ def edit_hours(location_id):
         flash("Please login to access", "danger")
         return redirect("/")
     
-    ##if g.user.admin == False:
-        ##flash ("Unauthorized", "danger")
-        ##return redirect("/login")
+    if g.user.admin == False:
+        flash ("Unauthorized", "danger")
+        return redirect("/login")
 
     location = Location.query.get_or_404(location_id)
     form = Location_Form(obj = location)
@@ -434,9 +455,9 @@ def edit_training(training_id):
         flash("Please login to access", "danger")
         return redirect("/")
     
-    ##if g.user.admin == False:
-        ##flash ("Unauthorized", "danger")
-        ##return redirect("/login")
+    if g.user.admin == False:
+        flash ("Unauthorized", "danger")
+        return redirect("/login")
 
     training = Training.query.get_or_404(training_id)
     form = Training_Form(obj = training)
@@ -462,6 +483,6 @@ def edit_training(training_id):
 #        db.session.rollback()
 #    db.session.remove()
 
-#@app.errorhandler(404)
-#def not_found(error):
-#    return render_template("/404.html")
+@app.errorhandler(404)
+def not_found(error):
+  return render_template("/404.html")
