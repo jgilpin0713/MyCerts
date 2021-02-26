@@ -6,6 +6,8 @@ from forms import Login_Form, User_Form, Cert_Form, Training_Form, Location_Form
 from flask_debugtoolbar import DebugToolbarExtension
 from sqlalchemy.exc import IntegrityError
 from datetime import datetime
+from flask_mail import Mail, Message
+
 
 
 CURR_USER_KEY = "curr_user"
@@ -16,7 +18,13 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["SQLALCHEMY_ECHO"] = True
 app.config["DEBUG_TB_INTERCEPT_REDIRECTS"] = True
 app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "You can do this")
-
+app.config['MAIL_SERVER']='smtp.gmail.com'
+app.config['MAIL_PORT'] = 465
+app.config['MAIL_USERNAME'] = 
+app.config['MAIL_PASSWORD'] = 
+app.config['MAIL_USE_TLS'] = False
+app.config['MAIL_USE_SSL'] = True
+mail = Mail(app)
 
 
 connect_db(app)
@@ -28,9 +36,10 @@ toolbar = DebugToolbarExtension(app)
 
 @app.route("/")
 def display():
-    """Show Homepage"""
+    """Show Homepage, sign up and login buttons"""
 
-    ## login or sign up button 
+    #still needs some cleanup on imagry and what the site is about. 
+
     return render_template("index.html")   
 
 ##################################################################
@@ -107,6 +116,10 @@ def sign_up():
             flash("Email already in use", "danger")
             return render_template("sign-up.html", form = form)
         login(user)
+        ### The server set up isn't working for this code yet... 
+        #msg = Message("Welcome!", recipients = ["jodyschaedel@gmail.com"])
+        #msg.body = "Welcome to MyCerts!"
+        #mail.send(msg)
         return redirect ("/administrator")
 
     else:   
@@ -126,9 +139,15 @@ def logout_user():
 def reset_password():
     """ Reset users password"""
 
+   
     form = Reset_Pwd_Form()
+
+    #SO if the form is presented and the email is in the db, update the user's password... 
+    #Possibly an email? 
+
     if form.validate_on_submit():
-        if form.email.data:
+        if form.email.data in users.email:
+
             User.password_reset(
                 username = form.username.data,
                 password = form.password.data,
@@ -155,9 +174,8 @@ def display_certs(user_id):
 
     user = User.query.get_or_404(user_id)
     
-
-
     return render_template("users/display_cert.html", user = user)
+
 
 @app.route("/hours/<int:user_id>")
 def display_hours(user_id):
@@ -203,6 +221,9 @@ def show_all_users():
     locations = Location.query.all()
     certs = Certs.query.all()
     training = Training.query.all()
+
+    ### need to get these in a table on this page... 
+    ## need a delete button too
     
     return render_template("admin.html", users=users, locations = locations, certs = certs, training = training)
 
@@ -219,9 +240,9 @@ def add_employee():
         return redirect("/login")
 
     form = User_Form()
-    #form.location.choices = db.session.query(Location.id, Location.site_name).all()
+    form.location.choices = db.session.query(Location.id, Location.site_name).all()
     
-    #form.certs.choices = db.session.query(Certs.id, Certs.cert_name).all()
+    form.certs.choices = db.session.query(Certs.id, Certs.cert_name).all()
 
     if form.validate_on_submit():
         try: 
@@ -235,10 +256,11 @@ def add_employee():
                 admin = form.admin.data,
                 completed = form.completed.data,
                 required = form.required.data,
-                #location = form.location.data,
-                #certs = form.certs.data
+                location = form.location.data,
+                certs = form.certs.data
             )
 
+            ### Int is not list-like... Has something to do with certs and locations being returned as an int... 
             
             db.session.add(user)
             db.session.commit()
@@ -373,8 +395,7 @@ def edit_employee(user_id):
     form.certs.choices = db.session.query(Certs.id, Certs.cert_name).all()
 
     if form.validate_on_submit():
-        #user.username = form.username.data,
-        #user.password = form.password.data, 
+        
         user.email = form.email.data, 
         user.first_name = form.first_name.data,
         user.last_name = form.last_name.data,
