@@ -1,7 +1,7 @@
 import os
 
 from flask import Flask, render_template, redirect, request, session, g, flash, json
-from models import connect_db, db, Certs, Training, User, Location
+from models import connect_db, db, Certs, Training, Employee, Location
 from forms import Login_Form, User_Form, Cert_Form, Training_Form, Location_Form, SignUp_Form, Edit_User_Form, Reset_Pwd_Form
 from flask_debugtoolbar import DebugToolbarExtension
 from sqlalchemy.exc import IntegrityError
@@ -20,8 +20,8 @@ app.config["DEBUG_TB_INTERCEPT_REDIRECTS"] = True
 app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "You can do this")
 app.config['MAIL_SERVER']='smtp.gmail.com'
 app.config['MAIL_PORT'] = 465
-app.config['MAIL_USERNAME'] = 
-app.config['MAIL_PASSWORD'] = 
+#app.config['MAIL_USERNAME'] = 
+#app.config['MAIL_PASSWORD'] = 
 app.config['MAIL_USE_TLS'] = False
 app.config['MAIL_USE_SSL'] = True
 mail = Mail(app)
@@ -50,15 +50,15 @@ def add_user_to_g():
     """If user is logged in, add current user to Flask global."""
 
     if CURR_USER_KEY in session:
-        g.user = User.query.get(session[CURR_USER_KEY])
+        g.user = Employee.query.get(session[CURR_USER_KEY])
 
     else:
         g.user = None
 
-def login(user):
+def login(employee):
     """Login user."""
 
-    session[CURR_USER_KEY] = user.id
+    session[CURR_USER_KEY] = employee.id
 
 
 def logout():
@@ -76,14 +76,14 @@ def login_user():
     form = Login_Form()
 
     if form.validate_on_submit():
-        user = User.authenticate(
+        employee = Employee.authenticate(
             username = form.username.data, 
             password = form.password.data)
 
-        if user:
-            login(user)
-            flash(f"Hello {user.first_name}!", "success")
-            return redirect(f"/mycerts/{user.id}")
+        if employee:
+            login(employee)
+            flash(f"Hello {employee.first_name}!", "success")
+            return redirect(f"/mycerts/{employee.id}")
 
         flash("Invalid Username or Password", "danger")
 
@@ -101,21 +101,22 @@ def sign_up():
 
     if form.validate_on_submit():
         try:
-            user = User.register(
+            employee = Employee.register(
                 username = form.username.data,
                 password = form.password.data, 
                 email = form.email.data, 
                 first_name = form.first_name.data,
                 last_name = form.last_name.data,
                 hire_date = form.hire_date.data,
-                admin = form.admin.data)
+                is_admin = form.is_admin.data
+                )
             
             db.session.commit()
 
         except IntegrityError:
             flash("Email already in use", "danger")
             return render_template("sign-up.html", form = form)
-        login(user)
+        login(employee)
         ### The server set up isn't working for this code yet... 
         #msg = Message("Welcome!", recipients = ["jodyschaedel@gmail.com"])
         #msg.body = "Welcome to MyCerts!"
@@ -148,7 +149,7 @@ def reset_password():
     if form.validate_on_submit():
         if form.email.data in users.email:
 
-            User.password_reset(
+            Employee.password_reset(
                 username = form.username.data,
                 password = form.password.data,
             )
@@ -164,33 +165,33 @@ def reset_password():
 # user routes
 
 
-@app.route("/mycerts/<int:user_id>")
-def display_certs(user_id):
+@app.route("/mycerts/<int:employee_id>")
+def display_certs(employee_id):
     """Display certs for user logged in"""
 
     if not g.user:
         flash("Please Login to continue.", "danger")
         return redirect("/")
 
-    user = User.query.get_or_404(user_id)
+    employee = Employee.query.get_or_404(employee_id)
     
-    return render_template("users/display_cert.html", user = user)
+    return render_template("users/display_cert.html", employee = employee)
 
 
-@app.route("/hours/<int:user_id>")
-def display_hours(user_id):
+@app.route("/hours/<int:employee_id>")
+def display_hours(employee_id):
     """Display training hours with graph for user logged in"""
 
     if not g.user:
         flash("Please Login to continue.", "danger")
         return redirect("/")
     
-    user = User.query.get_or_404(user_id)
+    employee = Employee.query.get_or_404(employee_id)
 
     labels = json.dumps( ["Completed", "Required"])
-    data = json.dumps([user.completed, user.required])
+    data = json.dumps([employee.completed, employee.required])
  
-    return render_template("users/display_hours.html", user = user, labels = labels, data = data)
+    return render_template("users/display_hours.html", employee = employee, labels = labels, data = data)
 
 @app.route("/training")
 def display_training():
@@ -213,19 +214,28 @@ def show_all_users():
     if not g.user:
         flash("Please login to access", "danger")
         return redirect("/")
-    if g.user.admin == False:
+    if g.user.is_admin == False:
         flash ("Unauthorized", "danger")
         return redirect("/login")
 
-    users = User.query.all()
+    employees = Employee.query.all()
     locations = Location.query.all()
     certs = Certs.query.all()
     training = Training.query.all()
 
+    for employee in employees:
+        total_completed = 0
+        total_required = 0
+        if employee.completed != None and employee.required != None:
+            total_completed= total_completed + employee.completed
+            total_required= total_required + employee.required
+
     ### need to get these in a table on this page... 
     ## need a delete button too
+    labels = json.dumps( ["Completed", "Required"])
+    data = json.dumps([total_completed, total_required])
     
-    return render_template("admin.html", users=users, locations = locations, certs = certs, training = training)
+    return render_template("admin.html", employees = employees, locations = locations, certs = certs, training = training, labels = labels, data = data)
 
 @app.route("/ad/add-user", methods = ["GET", "POST"])
 def add_employee():
@@ -235,34 +245,27 @@ def add_employee():
         flash("Please login to access", "danger")
         return redirect("/")
     
-    if g.user.admin == False:
+    if g.user.is_admin == False:
         flash ("Unauthorized", "danger")
         return redirect("/login")
 
-    form = User_Form()
-    form.location.choices = db.session.query(Location.id, Location.site_name).all()
+    form = SignUp_Form()
     
-    form.certs.choices = db.session.query(Certs.id, Certs.cert_name).all()
 
     if form.validate_on_submit():
         try: 
-            user = User(
+            employee = Employee.register(
                 username = form.username.data,
                 password = form.password.data, 
                 email = form.email.data, 
                 first_name = form.first_name.data,
                 last_name = form.last_name.data,
                 hire_date = form.hire_date.data, 
-                admin = form.admin.data,
-                completed = form.completed.data,
-                required = form.required.data,
-                location = form.location.data,
-                certs = form.certs.data
+                is_admin = form.is_admin.data,
             )
 
-            ### Int is not list-like... Has something to do with certs and locations being returned as an int... 
-            
-            db.session.add(user)
+            db.session.add(employee)
+
             db.session.commit()
         except IntegrityError:
             flash("Email already in use", "danger")
@@ -283,7 +286,7 @@ def add_cert():
         flash("Please login to access", "danger")
         return redirect("/")
     
-    if g.user.admin == False:
+    if g.user.is_admin == False:
         flash ("Unauthorized", "danger")
         return redirect("/login")
 
@@ -296,7 +299,8 @@ def add_cert():
             required = form.required.data,
             expire = form.expire.data,
             good_for_time = form.good_for_time.data,
-            good_for_unit = form.good_for_unit.data
+            good_for_unit = form.good_for_unit.data,
+            
         )
         db.session.add(cert)
         db.session.commit()
@@ -317,7 +321,7 @@ def add_location():
         flash("Please login to access", "danger")
         return redirect("/")
     
-    if g.user.admin == False:
+    if g.user.is_admin == False:
         flash ("Unauthorized", "danger")
         return redirect("/login")
     
@@ -350,7 +354,7 @@ def add_training():
         flash("Please login to access", "danger")
         return redirect("/")
     
-    if g.user.admin == False:
+    if g.user.is_admin == False:
         flash ("Unauthorized", "danger")
         return redirect("/login")
 
@@ -362,7 +366,7 @@ def add_training():
             city = form.city.data,
             state = form.state.data,
             room = form.room.data,
-            hour = form.hour.data
+            hours = form.hours.data
         )
         db.session.add(training)
         db.session.commit()
@@ -375,44 +379,44 @@ def add_training():
         return render_template("/admin/add_training.html", form = form)
 
 
-@app.route("/ad/edit-user/<int:user_id>", methods = ["GET", "POST"])
-def edit_employee(user_id):
+@app.route("/ad/edit-user/<int:employee_id>", methods = ["GET", "POST"])
+def edit_employee(employee_id):
     """Setup a user for certs"""
 
     if not g.user:
         flash("Please login to access", "danger")
         return redirect("/")
     
-    if g.user.admin == False:
+    if g.user.is_admin == False:
         flash ("Unauthorized", "danger")
         return redirect("/login")
 
-    user = User.query.get_or_404(user_id)
-    form = Edit_User_Form(obj = user)
+    employee = Employee.query.get_or_404(employee_id)
+    form = Edit_User_Form(obj = employee)
     
     form.location.choices = db.session.query(Location.id, Location.site_name).all()
     
-    form.certs.choices = db.session.query(Certs.id, Certs.cert_name).all()
+    form.certs.choices = db.session.query(Certs.id , Certs.cert_name).all()
 
     if form.validate_on_submit():
         
-        user.email = form.email.data, 
-        user.first_name = form.first_name.data,
-        user.last_name = form.last_name.data,
-        user.hire_date = form.hire_date.data, 
-        user.admin = form.admin.data
-        user.location.site_name = form.location.data
-        user.certs.cert_name = form.certs.data
-        user.completed = form.completed.data,
-        user.required = form.required.data
+        employee.email = form.email.data, 
+        employee.first_name = form.first_name.data,
+        employee.last_name = form.last_name.data,
+        employee.hire_date = form.hire_date.data, 
+        employee.is_admin = form.is_admin.data
+        employee.completed = form.completed.data,
+        employee.required = form.required.data,
+        employee.location = form.location.data,
+        employee.certs = form.certs.data
         
         db.session.commit()
     
-        flash(f"{user.first_name} {user.last_name} has been saved", "success")
+        flash(f"{employee.first_name} {employee.last_name} has been saved", "success")
         return redirect("/administrator")
     else:
 
-        return render_template("/admin/edit_user.html", user = user, form = form)
+        return render_template("/admin/edit_user.html", employee = employee, form = form)
 
 @app.route("/ad/edit-cert/<int:cert_id>")
 def edit_cert(cert_id):
@@ -422,7 +426,7 @@ def edit_cert(cert_id):
         flash("Please login to access", "danger")
         return redirect("/")
     
-    if g.user.admin == False:
+    if g.user.is_admin == False:
         flash ("Unauthorized", "danger")
         return redirect("/login")
 
@@ -430,12 +434,14 @@ def edit_cert(cert_id):
     form = Cert_Form(obj=cert)
 
     if form.validate_on_submit():
-        cert.cert_name = form.cert_name.data,
+        cert.cert_name = form.cert_name.data
         cert.hours = form.hours.data
         cert.required = form.required.data
         cert.expire = form.expire.data
         cert.good_for_time = form.good_for_time.data
         cert.good_for_unit = form.good_for_unit.data
+        
+
         db.session.commit()
         flash(f"{cert.cert_name} has been updated")
         return redirect("/administrator")
@@ -450,7 +456,7 @@ def edit_hours(location_id):
         flash("Please login to access", "danger")
         return redirect("/")
     
-    if g.user.admin == False:
+    if g.user.is_admin == False:
         flash ("Unauthorized", "danger")
         return redirect("/login")
 
@@ -476,7 +482,7 @@ def edit_training(training_id):
         flash("Please login to access", "danger")
         return redirect("/")
     
-    if g.user.admin == False:
+    if g.user.is_admin == False:
         flash ("Unauthorized", "danger")
         return redirect("/login")
 
@@ -488,7 +494,7 @@ def edit_training(training_id):
         training.city = form.city.data,
         training.state = form.state.data,
         training.room = form.room.data,
-        training.hour = form.hour.data
+        training.hours = form.hours.data
 
         db.session.commit()
         flash(f"{training.name} has been updated")
