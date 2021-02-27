@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+
+{% block content %}
+<a class="btn btn-primary" type="button" href = "/ad/add-user">Add Employee</a>
+
+{% for employee in employees %}
+    <li>
+        <a href = "/ad/edit-user/{{employee.id}}"> {{employee.first_name}} {{employee.last_name}}</a>
+    </li>  
+{% endfor %}  
+</ul>
+
+<a href = "/administrator" class = "btn btn-danger">Go Back</a>
+
+{% endblock %}

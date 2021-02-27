@@ -30,11 +30,6 @@ class Employee(db.Model):
     #location = db.relationship("Location", backref = "user", cascade = "all, delete", lazy = True)
     #certs = db.relationship("Certs", backref = "certification", cascade = "all, delete", lazy = True)
     
-    
-    def __repr__(self):
-        """Representation"""
-        return (self.first_name)
-
 
     @classmethod
     def register(cls, username, password, email, first_name, last_name, hire_date, is_admin): ## do i need to add location and permissions?
@@ -54,9 +49,10 @@ class Employee(db.Model):
 
         return employee
 
-    @classmethod
-    def password_reset(cls, username, password):
+    
+    def password_reset(username, password):
         """Password RESET"""
+        
         hashed_pwd = bcrypt.generate_password_hash(password).decode("UTF-8")
 
         employee = Employee(
@@ -64,11 +60,10 @@ class Employee(db.Model):
             password = hashed_pwd,
         )
 
-        db.session.commit()
         return employee
 
     
-    def authenticate( username, password):
+    def authenticate(username, password):
         """Validate that user and password are correct"""
         employee = Employee.query.filter_by(username=username).first()
 

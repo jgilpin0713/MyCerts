@@ -19,8 +19,8 @@ class User_Form(FlaskForm):
     last_name = StringField("Last Name", validators=[InputRequired(), Length (max = 30)])
     is_admin = BooleanField("Is this person an administrator?")
     hire_date = DateField("Date of Hire", validators=[InputRequired()])
-    location = SelectMultipleField("Location", validators=[InputRequired()], coerce = int, choices = []) ## choices are the location already added 
-    certs = SelectMultipleField("Certifications (Select all that Apply)", validators=[InputRequired()], coerce= int) ## choices are the certifications already added
+    location = SelectField("Location", validators=[InputRequired()], coerce = int, choices = []) ## choices are the location already added 
+    certs = SelectField("Certifications (Select all that Apply)", validators=[InputRequired()], coerce= int) ## choices are the certifications already added
     completed = IntegerField("Training Hours Completed", default = 0)
     required = IntegerField("Training Hours Required", validators=[InputRequired()])
 
@@ -63,7 +63,7 @@ class SignUp_Form(FlaskForm):
     first_name = StringField("First Name", validators=[InputRequired(), Length(max = 25)])
     last_name = StringField("Last Name", validators=[InputRequired(), Length (max = 30)])
     hire_date = DateField("Date of Hire", validators=[InputRequired()])
-    is_admin = BooleanField("Is this person an administrator?")
+    is_admin = BooleanField("Is this person an administrator?", default = "checked")
 
 
 class Edit_User_Form(FlaskForm):
@@ -74,8 +74,8 @@ class Edit_User_Form(FlaskForm):
     last_name = StringField("Last Name", validators=[InputRequired(), Length (max = 30)])
     is_admin = BooleanField("Is this person an administrator?")
     hire_date = DateField("Date of Hire", validators=[InputRequired()])
-    location = SelectMultipleField("Location", validators=[InputRequired()], coerce = int, choices = []) ## choices are the location already added 
-    certs = SelectMultipleField("Certifications (Select all that Apply)", validators=[InputRequired()], coerce= int) ## choices are the certifications already added
+    location = SelectField("Location", validators=[InputRequired()], coerce = int, choices = []) ## choices are the location already added 
+    certs = SelectField("Certifications (Select all that Apply)", validators=[InputRequired()], coerce= int) ## choices are the certifications already added
     completed = IntegerField("Training Hours Completed", default = 0)
     required = IntegerField("Training Hours Required", validators=[InputRequired()])
 
@@ -85,4 +85,9 @@ class Reset_Pwd_Form(FlaskForm):
 
     username = StringField("Username", validators= [InputRequired(), Length(max = 25)])
     password = PasswordField("Password", validators=[Length(min = 8, max = 80)])
+
+
+class Email_Form(FlaskForm):
+    """Email entered to search user"""
+
     email = StringField("Email", validators=[InputRequired(), Email(message="Invalid Email"), Length(max = 50)])

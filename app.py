@@ -2,13 +2,14 @@ import os
 
 from flask import Flask, render_template, redirect, request, session, g, flash, json
 from models import connect_db, db, Certs, Training, Employee, Location
-from forms import Login_Form, User_Form, Cert_Form, Training_Form, Location_Form, SignUp_Form, Edit_User_Form, Reset_Pwd_Form
+from forms import Login_Form, User_Form, Cert_Form, Training_Form, Location_Form, SignUp_Form, Edit_User_Form, Reset_Pwd_Form, Email_Form
 from flask_debugtoolbar import DebugToolbarExtension
 from sqlalchemy.exc import IntegrityError
 from datetime import datetime
 from flask_mail import Mail, Message
+from flask_bcrypt import Bcrypt
 
-
+bcrypt = Bcrypt()
 
 CURR_USER_KEY = "curr_user"
 
@@ -137,28 +138,50 @@ def logout_user():
     return redirect("/login")
 
 @app.route("/password", methods = ["GET", "POST"])
-def reset_password():
+def email_search():
     """ Reset users password"""
-
-   
-    form = Reset_Pwd_Form()
+    
+    form = Email_Form()
 
     #SO if the form is presented and the email is in the db, update the user's password... 
     #Possibly an email? 
 
     if form.validate_on_submit():
-        if form.email.data in users.email:
+        email = form.email.data
+        employee = Employee.query.filter_by(email=email).first()
+        flash("Now, reset your password", "success")
+        return redirect(f"/password_reset/{employee.id}")
 
-            Employee.password_reset(
-                username = form.username.data,
-                password = form.password.data,
-            )
+    else:
+        return render_template("password.html", form=form)
+
+
+@app.route("/password_reset/<int:employee_id>", methods = ["GET", "POST"])
+def reset_password(employee_id):
+    """ Reset users password"""
+
+    employee = Employee.query.get(employee_id)
+
+    form = Reset_Pwd_Form(obj = employee)
+
+    #SO if the form is presented and the email is in the db, update the user's password... 
+    #Possibly an email? 
+
+    if form.validate_on_submit():
+        employee.username = form.username.data
+        hashed_pwd = bcrypt.generate_password_hash(form.password.data).decode("UTF-8")
+        employee.password = hashed_pwd
+
+        db.session.commit()
+
         
-        flash("You have succesfully changed password!", "success")
+        
+        flash("Now, reset your password", "success")
         return redirect("/login")
 
     else:
         return render_template("password.html", form=form)
+
 
 
 #######################################################################
@@ -206,10 +229,10 @@ def display_training():
     return render_template("users/show_training.html", trainings = trainings)
 
 ##########################################################################
-#admin routes
+#admin dashboard routes
 
 @app.route("/administrator")
-def show_all_users():
+def show_all_information():
     """Display Admin options along with list of Users"""
     if not g.user:
         flash("Please login to access", "danger")
@@ -223,19 +246,75 @@ def show_all_users():
     certs = Certs.query.all()
     training = Training.query.all()
 
-    for employee in employees:
-        total_completed = 0
-        total_required = 0
-        if employee.completed != None and employee.required != None:
-            total_completed= total_completed + employee.completed
-            total_required= total_required + employee.required
-
-    ### need to get these in a table on this page... 
-    ## need a delete button too
-    labels = json.dumps( ["Completed", "Required"])
-    data = json.dumps([total_completed, total_required])
     
-    return render_template("admin.html", employees = employees, locations = locations, certs = certs, training = training, labels = labels, data = data)
+    return render_template("admin.html", employees = employees, locations = locations, certs = certs, training = training)
+
+
+@app.route("/employees")
+def show_all_employees():
+    """Display Admin options along with list of Users"""
+    if not g.user:
+        flash("Please login to access", "danger")
+        return redirect("/")
+    if g.user.is_admin == False:
+        flash ("Unauthorized", "danger")
+        return redirect("/login")
+
+    employees = Employee.query.all()
+      
+    
+    return render_template("employee_display.html", employees = employees)
+
+@app.route("/locations")
+def show_all_locations():
+    """Display Admin options along with list of Users"""
+    if not g.user:
+        flash("Please login to access", "danger")
+        return redirect("/")
+    if g.user.is_admin == False:
+        flash ("Unauthorized", "danger")
+        return redirect("/login")
+
+    locations = Location.query.all()
+      
+    
+    return render_template("locations_display.html", locations = locations)
+
+@app.route("/certifications")
+def show_all_certifications():
+    """Display Admin options along with list of Users"""
+    if not g.user:
+        flash("Please login to access", "danger")
+        return redirect("/")
+    if g.user.is_admin == False:
+        flash ("Unauthorized", "danger")
+        return redirect("/login")
+
+    
+    certs = Certs.query.all()
+    
+    return render_template("certs_display.html", certs = certs)
+
+@app.route("/trainings")
+def show_all_training():
+    """Display Admin options along with list of Users"""
+    if not g.user:
+        flash("Please login to access", "danger")
+        return redirect("/")
+    if g.user.is_admin == False:
+        flash ("Unauthorized", "danger")
+        return redirect("/login")
+
+    
+    training = Training.query.all()
+
+    
+    return render_template("training_display.html", training = training)
+
+
+
+#####################################################################################################
+#add and edit routes
 
 @app.route("/ad/add-user", methods = ["GET", "POST"])
 def add_employee():

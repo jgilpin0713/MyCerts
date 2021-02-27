@@ -2,84 +2,48 @@
 
 
 {% block content %}
-<ul>
-{% for employee in employees %}
-    <li>
-        <a href = "/ad/edit-user/{{employee.id}}"> {{employee.first_name}} {{employee.last_name}}</a>
-    </li>  
-{% endfor %}  
-</ul>
 
-<ul>
-    {% for cert in certs %}
-        <li>
-            <a href = "/ad/edit-cert/{{cert.id}}"> {{cert.cert_name}}</a>
-        </li>  
-    {% endfor %}  
-</ul>
-
-
-<ul>
-    {% for location in locations %}
-        <li>
-            <a href = "/ad/edit-location/{{location.id}}"> {{location.site_name}} </a>
-        </li>  
-    {% endfor %}  
-</ul>
-
-
-<ul>
-    {% for train in training %}
-        <li>
-            <a href = "/ad/edit-training/{{train.id}}"> {{train.name}} </a>
-        </li>  
-    {% endfor %}  
-</ul>
-
-<div class = "container">
-    <h1 class = "display-1 text-center"> Welcome to MyCerts ADMIN!</h1>
-    <div class ="row justify-content-center">
-        <div class="d-grid gap-2 col-6 mx-auto">
-            <a class="btn btn-success" type="button" href = "/ad/add-location">Add Locations</a>
-    
-            <a class="btn btn-success" type="button" href = "/ad/add-cert">Add Certification</a>
-            
-            <a class="btn btn-primary" type="button" href = "/ad/add-user">Add Employee</a>
-            <a class="btn btn-success" type="button" href = "/ad/add-training">Add Training</a>
-            
-           
+<div class="container-fluid">
+    <div class="row">
+      <nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse">
+        <div class="position-sticky pt-3">
+          <ul class="nav flex-column">
+            <li class="nav-item">
+              <a class="nav-link active" aria-current="page" href="/administrator">
+                <span data-feather="home"></span>
+                Dashboard
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="/employees">
+                <span data-feather="file"></span>
+                Employees
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="/locations">
+                <span data-feather="shopping-cart"></span>
+                Locations
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="/certifications">
+                <span data-feather="users"></span>
+                Certifications
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="/trainings">
+                <span data-feather="bar-chart-2"></span>
+                Training
+              </a>
+            </li>
+          </ul>
         </div>
-    </div>
+    </nav>    
+    </div>    
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.5.0/Chart.min.js"></script>
-
-<canvas id="pie-chart" width="400" height="150"></canvas>
-
-{% block javascript %}
-<script>
-    labels = JSON.parse({{ labels | tojson}})
-    data = JSON.parse({{ data | tojson}})
-new Chart(document.getElementById("pie-chart"), {
-    type: 'pie',
-    data: {
-      labels: labels,
-      datasets: [{
-        label: "Population (millions)",
-        backgroundColor: ["#3e95cd", "#8e5ea2"],
-        data: data
-      }]
-    },
-    options: {
-      title: {
-        display: true,
-        text: 'My Training Hours'
-      }
-    }
-});
-</script>
-
-{% endblock %}
 
 
 

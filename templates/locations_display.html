@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+
+{% block content %}
+<a class="btn btn-success" type="button" href = "/ad/add-location">Add Locations</a>
+
+<ul>
+    {% for location in locations %}
+        <li>
+            <a href = "/ad/edit-location/{{location.id}}"> {{location.site_name}} </a>
+        </li>  
+    {% endfor %}  
+</ul>
+
+<a href = "/administrator" class = "btn btn-danger">Go Back</a>
+
+{% endblock %}

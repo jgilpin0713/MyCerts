@@ -2,11 +2,33 @@
 
 
 {% block content %}
+<div class="row ">
+    <div class="col-md-8">
+      <h2 class="join-message">Edit Training</h2>
 
-edit training
+      <form method="POST" id="add_user_form">
+        {{ form.hidden_tag() }}
 
-<a href="/admin/edit-training" class="btn btn-success">Edit</a>
+        {% for field in form if field.widget.input_type != 'hidden' %}
+        <div class = "form-group"> 
+          {{ field.label}}
+          {{field}}
+          {% for error in field.errors %}
+            <small class=" form-text text-danger">{{ error }}</small>
+          {% endfor %}
+          {% endfor %}
+          </div>
+          {% for msg in get_flashed_messages() %}
+          <p>
+            {{msg}}
+          </p>
+          {% endfor %}
 
-<a href="/administrator" class="btn btn-danger">Go Back</a>
+        <button class="btn btn-primary btn-block btn-lg">ADD!</button>
+        <a href = "/administrator" class = "btn btn-danger">Go Back</a>
+      </form>
+    </div>
+  </div>
+</div> 
 
 {% endblock %}
