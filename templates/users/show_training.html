@@ -1,24 +1,38 @@
 
+
 {% extends "base.html" %}
 
 
 {% block content %}
 
-show training
-
-<ul>
-    {% for training in trainings %}
-        <li>
-             {{training.name}},
-             {{training.city}},
-             {{training.state}},
-             {{training.room}},
-             {{training.hour}}
-        </li>  
-    {% endfor %}  
-</ul>
-
-
-<a href="/mycerts/{{g.user.id}}" class="btn btn-danger">Go Back</a>
-
+<h1>Training</h1>
+<div class="table-responsive">
+    <table class="table table-striped table-hover border-secondary">
+      <thead>
+        <tr>
+          <th scope="col">Training Name</th>
+          <th scope="col">City, State</th>
+          <th scope="col">Date of Training</th>
+          <th scope="col">Time of Training</th>
+          <th scope="col">Room</th>
+    
+        </tr>
+      </thead>
+    
+      <tbody>
+        {% for training in trainings %}
+        <tr>
+          <td>{{training.name}}</td>
+          <td>{{training.city}}, {{training.state}}</td>
+          <td>{{training.date}}</td>
+          <td>{{training.time}}</td>
+          <td>{{training.room}}</td>
+        </tr>
+        {% endfor %} 
+      </tbody>
+  
+    </table>
+  </div>
+  
+  <a href="/mycerts/{{g.user.id}}" class="btn btn-danger">Go Back</a>
 {% endblock %}

@@ -1,11 +1,11 @@
 import os
 
 from flask import Flask, render_template, redirect, request, session, g, flash, json
-from models import connect_db, db, Certs, Training, Employee, Location
-from forms import Login_Form, User_Form, Cert_Form, Training_Form, Location_Form, SignUp_Form, Edit_User_Form, Reset_Pwd_Form, Email_Form
+from models import connect_db, db, Cert, Training, Employee, Location, employee_certification
+from forms import Login_Form, User_Form, Cert_Form, Training_Form, Location_Form, SignUp_Form, Edit_User_Form, Reset_Pwd_Form, Add_Cert_Form, Email_Form, Edit_Hours_Form, Add_Loc_Form
 from flask_debugtoolbar import DebugToolbarExtension
 from sqlalchemy.exc import IntegrityError
-from datetime import datetime
+from datetime import datetime, timedelta, date
 from flask_mail import Mail, Message
 from flask_bcrypt import Bcrypt
 
@@ -61,15 +61,12 @@ def login(employee):
 
     session[CURR_USER_KEY] = employee.id
 
-
 def logout():
     """ Logout user"""
 
     if CURR_USER_KEY in session:
         del session[CURR_USER_KEY]
         
-
-
 @app.route("/login", methods=["GET", "POST"])
 def login_user():
     """Login form to login"""
@@ -122,7 +119,7 @@ def sign_up():
         #msg = Message("Welcome!", recipients = ["jodyschaedel@gmail.com"])
         #msg.body = "Welcome to MyCerts!"
         #mail.send(msg)
-        return redirect ("/administrator")
+        return redirect (f"/mycerts/{employee.id}")
 
     else:   
 
@@ -143,9 +140,6 @@ def email_search():
     
     form = Email_Form()
 
-    #SO if the form is presented and the email is in the db, update the user's password... 
-    #Possibly an email? 
-
     if form.validate_on_submit():
         email = form.email.data
         employee = Employee.query.filter_by(email=email).first()
@@ -155,7 +149,6 @@ def email_search():
     else:
         return render_template("password.html", form=form)
 
-
 @app.route("/password_reset/<int:employee_id>", methods = ["GET", "POST"])
 def reset_password(employee_id):
     """ Reset users password"""
@@ -164,8 +157,6 @@ def reset_password(employee_id):
 
     form = Reset_Pwd_Form(obj = employee)
 
-    #SO if the form is presented and the email is in the db, update the user's password... 
-    #Possibly an email? 
 
     if form.validate_on_submit():
         employee.username = form.username.data
@@ -182,11 +173,8 @@ def reset_password(employee_id):
     else:
         return render_template("password.html", form=form)
 
-
-
 #######################################################################
 # user routes
-
 
 @app.route("/mycerts/<int:employee_id>")
 def display_certs(employee_id):
@@ -197,8 +185,10 @@ def display_certs(employee_id):
         return redirect("/")
 
     employee = Employee.query.get_or_404(employee_id)
+   
+    certs = employee_certification.query.filter_by(employee_id = employee_id).all()
     
-    return render_template("users/display_cert.html", employee = employee)
+    return render_template("users/display_cert.html", employee = employee, certs = certs)
 
 
 @app.route("/hours/<int:employee_id>")
@@ -241,13 +231,10 @@ def show_all_information():
         flash ("Unauthorized", "danger")
         return redirect("/login")
 
-    employees = Employee.query.all()
-    locations = Location.query.all()
-    certs = Certs.query.all()
-    training = Training.query.all()
+    ## What should go on this page.... Directions? Graph? Summary?
 
     
-    return render_template("admin.html", employees = employees, locations = locations, certs = certs, training = training)
+    return render_template("admin.html")
 
 
 @app.route("/employees")
@@ -262,6 +249,7 @@ def show_all_employees():
 
     employees = Employee.query.all()
       
+    ## right now this is ALL users... 
     
     return render_template("employee_display.html", employees = employees)
 
@@ -277,6 +265,7 @@ def show_all_locations():
 
     locations = Location.query.all()
       
+      ## this is ALL locations
     
     return render_template("locations_display.html", locations = locations)
 
@@ -291,7 +280,8 @@ def show_all_certifications():
         return redirect("/login")
 
     
-    certs = Certs.query.all()
+    certs = Cert.query.all()
+    ## all possible certs...
     
     return render_template("certs_display.html", certs = certs)
 
@@ -372,7 +362,7 @@ def add_cert():
     form = Cert_Form()
 
     if form.validate_on_submit():
-        cert = Certs(
+        cert = Cert(
             cert_name = form.cert_name.data,
             hours = form.hours.data,
             required = form.required.data,
@@ -445,7 +435,9 @@ def add_training():
             city = form.city.data,
             state = form.state.data,
             room = form.room.data,
-            hours = form.hours.data
+            hours = form.hours.data,
+            date = form.date.data,
+            time = form.time.data
         )
         db.session.add(training)
         db.session.commit()
@@ -473,9 +465,9 @@ def edit_employee(employee_id):
     employee = Employee.query.get_or_404(employee_id)
     form = Edit_User_Form(obj = employee)
     
-    form.location.choices = db.session.query(Location.id, Location.site_name).all()
+    #form.location.choices = db.session.query(Location.id, Location.site_name).all()
     
-    form.certs.choices = db.session.query(Certs.id , Certs.cert_name).all()
+    #form.certs.choices = db.session.query(Certs.id , Certs.cert_name).all()
 
     if form.validate_on_submit():
         
@@ -484,10 +476,7 @@ def edit_employee(employee_id):
         employee.last_name = form.last_name.data,
         employee.hire_date = form.hire_date.data, 
         employee.is_admin = form.is_admin.data
-        employee.completed = form.completed.data,
-        employee.required = form.required.data,
-        employee.location = form.location.data,
-        employee.certs = form.certs.data
+
         
         db.session.commit()
     
@@ -496,6 +485,122 @@ def edit_employee(employee_id):
     else:
 
         return render_template("/admin/edit_user.html", employee = employee, form = form)
+
+    
+
+@app.route("/ad/employee-certificaton/<int:employee_id>", methods = ["GET", "POST"])
+def edit_employee_certifications(employee_id):
+    """Setup a user for certs"""
+
+    if not g.user:
+        flash("Please login to access", "danger")
+        return redirect("/")
+    
+    if g.user.is_admin == False:
+        flash ("Unauthorized", "danger")
+        return redirect("/login")
+
+    employee = Employee.query.get_or_404(employee_id)
+    
+    form = Add_Cert_Form(obj = employee)
+    
+    form.cert.choices = db.session.query(Cert.id , Cert.cert_name).all()
+   
+    
+    if form.validate_on_submit():
+        
+        cert = Cert.query.get(form.cert.data) 
+        employee.certs.append(cert)
+        r = employee_certification(received = form.received.data)
+        employee.certs.append(r)
+        db.session.add(employee)
+        db.session.commit()
+        
+   
+        
+        if cert.expire:
+
+            delta_unit = cert.good_for_unit # the unit for the cert
+            delta_time = cert.good_for_time # the time for the cert
+            #due_date =date(form.received.data) + datedelta(days=30)
+        
+        #employee.certs.due_date = due_date
+
+        #employee.certs.received = form.received.data
+
+        db.session.commit()
+    
+        flash(f"{employee.first_name} {employee.last_name} has been saved", "success")
+        return redirect("/administrator")
+    else:
+
+        return render_template("/admin/employee_cert.html", employee = employee, form = form)
+
+
+
+@app.route("/ad/employee-location/<int:employee_id>", methods = ["GET", "POST"])
+def edit_employee_locations(employee_id):
+    """Setup a user for certs"""
+
+    if not g.user:
+        flash("Please login to access", "danger")
+        return redirect("/")
+    
+    if g.user.is_admin == False:
+        flash ("Unauthorized", "danger")
+        return redirect("/login")
+
+    employee = Employee.query.get_or_404(employee_id)
+    
+    form = Add_Loc_Form(obj = employee)
+    
+    form.location.choices = db.session.query(Location.id, Location.site_name).all()
+    
+    
+    if form.validate_on_submit():
+        
+        location = Location.query.get(form.location.data) 
+        employee.locations.append(location)
+        db.session.add(employee)
+        
+        db.session.commit()
+
+        
+
+        flash(f"{employee.first_name} {employee.last_name} has been saved", "success")
+        return redirect("/administrator")
+    else:
+        locations = employee_location.query.filter_by(employee = employee).all()
+        return render_template("/admin/employee_cert.html", employee = employee, form = form, locations = locations)
+
+
+@app.route("/ad/edit-hours/<int:employee_id>", methods = ["GET", "POST"])
+def edit_employee_hours(employee_id):
+    """Setup a user for certs"""
+
+    if not g.user:
+        flash("Please login to access", "danger")
+        return redirect("/")
+    
+    if g.user.is_admin == False:
+        flash ("Unauthorized", "danger")
+        return redirect("/login")
+
+    employee = Employee.query.get_or_404(employee_id)
+    form = Edit_Hours_Form(obj = employee)
+
+    if form.validate_on_submit():
+        
+        employee.completed = form.completed.data, 
+        employee.required = form.required.data,
+                
+        db.session.commit()
+    
+        flash(f"{employee.first_name} {employee.last_name} has been saved", "success")
+        return redirect("/administrator")
+    else:
+
+        return render_template("/admin/edit_hours.html", employee = employee, form = form)
 
 @app.route("/ad/edit-cert/<int:cert_id>")
 def edit_cert(cert_id):
@@ -528,7 +633,7 @@ def edit_cert(cert_id):
     return render_template("/admin/edit_cert.html", form=form, cert = cert)
 
 @app.route("/ad/edit-location/<int:location_id>")
-def edit_hours(location_id):
+def edit_locations(location_id):
     """Setup a user for certs"""
 
     if not g.user:

@@ -1,6 +1,6 @@
 
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, BooleanField, SelectMultipleField, DateField, RadioField, IntegerField, SelectField
+from wtforms import StringField, PasswordField, BooleanField, TimeField, SelectMultipleField, DateField, RadioField, IntegerField, SelectField
 from wtforms.validators import InputRequired, Email, Optional, Length
 
 class Login_Form(FlaskForm):
@@ -44,6 +44,8 @@ class Training_Form(FlaskForm):
     state = StringField("State: ", validators=[InputRequired(), Length (max =2)])
     room = StringField("Room: ", validators=[InputRequired(), Length(max=30)])
     hours = IntegerField("How many hours?", validators=[InputRequired()])
+    date = DateField("Date training offered")
+    time = TimeField("Time training offered")
 
 
 class Location_Form(FlaskForm):
@@ -74,11 +76,23 @@ class Edit_User_Form(FlaskForm):
     last_name = StringField("Last Name", validators=[InputRequired(), Length (max = 30)])
     is_admin = BooleanField("Is this person an administrator?")
     hire_date = DateField("Date of Hire", validators=[InputRequired()])
-    location = SelectField("Location", validators=[InputRequired()], coerce = int, choices = []) ## choices are the location already added 
-    certs = SelectField("Certifications (Select all that Apply)", validators=[InputRequired()], coerce= int) ## choices are the certifications already added
+    #location = SelectField("Location", validators=[InputRequired()], coerce = int, choices = []) ## choices are the location already added 
+    #certs = SelectField("Certifications (Select all that Apply)", validators=[InputRequired()], coerce= int) ## choices are the certifications already added
+    
+class Add_Cert_Form(FlaskForm):
+    cert = SelectField("Certifications", validators=[InputRequired()], coerce= int) ## choices are the certifications already added
+    received = DateField("Date Issued")
+    #employees = SelectField("Employee", validators=[InputRequired()], coerce= int) ## choices are the certifications already added
+
+class Edit_Hours_Form(FlaskForm):
+
     completed = IntegerField("Training Hours Completed", default = 0)
     required = IntegerField("Training Hours Required", validators=[InputRequired()])
 
+
+class Add_Loc_Form(FlaskForm):
+
+    location = SelectField("Location", validators=[InputRequired()], coerce = int, choices = [])
 
 class Reset_Pwd_Form(FlaskForm):
     """Resetting password form"""

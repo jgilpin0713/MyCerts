@@ -5,7 +5,22 @@ from flask_bcrypt import Bcrypt
 db = SQLAlchemy()
 bcrypt = Bcrypt()
 
-  
+class employee_certification(db.Model):
+    ___tablename__ = "emp_cert", 
+
+    id = db.Column(db.Integer, primary_key = True, autoincrement = True) 
+    employee_id = db.Column(db.Integer, db.ForeignKey("employees.id", ondelete = "cascade")) 
+    cert_id = db.Column(db.Integer, db.ForeignKey("certs.id", ondelete = "cascade"))
+    received = db.Column(db.Date, nullable = False)
+    due_date = db.Column(db.Date)
+
+
+
+employee_location = db.Table("emp_loc", 
+db.Column("id", db.Integer, primary_key = True, autoincrement = True),
+db.Column("employee_id", db.Integer, db.ForeignKey("employees.id", ondelete = "cascade")), 
+db.Column("location_id", db.Integer, db.ForeignKey("locations.id", ondelete = "cascade")))
+
 
 class Employee(db.Model):
     """ Class for the Users of MyCerts"""
@@ -21,15 +36,10 @@ class Employee(db.Model):
     is_admin = db.Column(db.Boolean, nullable = False)
     completed = db.Column(db.Integer)
     required = db.Column(db.Integer)
-    location = db.Column(db.Integer, db.ForeignKey("locations.id", ondelete='CASCADE'))
-    certs = db.Column(db.Integer, db.ForeignKey("certs.id", ondelete='CASCADE'))
-
     
-    #locations = db.relationship("Location", secondary = employee_location, backref = db.backref("locals", lazy = "dynamic"), cascade = "all, delete")
-    #certs = db.relationship("Certs", secondary = employee_cert, backref = db.backref("certifications", lazy = "dynamic"), cascade = "all, delete")
-    #location = db.relationship("Location", backref = "user", cascade = "all, delete", lazy = True)
-    #certs = db.relationship("Certs", backref = "certification", cascade = "all, delete", lazy = True)
     
+    locations = db.relationship("Location", secondary = employee_location, cascade = "all, delete")
+    certs = db.relationship("Cert", secondary = "employee_certification", cascade = "all, delete")
 
     @classmethod
     def register(cls, username, password, email, first_name, last_name, hire_date, is_admin): ## do i need to add location and permissions?
@@ -84,19 +94,10 @@ class Location(db.Model):
     city = db.Column(db.String(25))
     state = db.Column(db.String(2), nullable = False) 
     
-    emp_loc = db.relationship("Employee", backref = "locations", cascade = "all, delete", lazy = "dynamic")
-    
-    
-    #users = db.relationship("User", cascade = "all, delete") ##not sure about this relationship
-    #users_id = db.Column(db.Integer, db.ForeignKey("users.id"))
-    def __repr__(self):
-        """Representation"""
-        return (self.site_name)
+    employees = db.relationship("Employee", secondary = employee_location, cascade = "all, delete")
+     
 
-    
-        
-
-class Certs(db.Model):
+class Cert(db.Model):
     __tablename__ = "certs"
     
     id = db.Column(db.Integer, autoincrement = True, primary_key = True)
@@ -108,16 +109,8 @@ class Certs(db.Model):
     good_for_unit = db.Column(db.String (10))
     
     
-    emp_cert = db.relationship("Employee", backref = "cert", cascade = "all, delete", lazy = True)
+    employee = db.relationship("Employee", secondary = "employee_certification", cascade = "all, delete")
     
-    
-    #user = db.relationship("User", cascade = "all, delete")
-    #certification_id = db.Column(db.Integer, db.ForeignKey("users.id"))
-    def __repr__(self):
-        """Representation"""
-        return (self.cert_name)
-
-
 class Training(db.Model):
     __tablename__ = "trainings"
     id = db.Column(db.Integer, primary_key = True, autoincrement = True)
@@ -126,11 +119,8 @@ class Training(db.Model):
     state = db.Column(db.String(2), nullable = False)
     room = db.Column(db.String(30), nullable = False)
     hours = db.Column(db.Integer, nullable = False)
-
-    def __repr__(self):
-        """Representation"""
-        return (self.name)
-
+    date = db.Column(db.Date, nullable = False)
+    time = db.Column(db.Time, nullable = False)
 
 
 def connect_db(app):

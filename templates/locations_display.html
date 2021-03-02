@@ -2,16 +2,32 @@
 
 
 {% block content %}
-<a class="btn btn-success" type="button" href = "/ad/add-location">Add Locations</a>
 
-<ul>
-    {% for location in locations %}
-        <li>
-            <a href = "/ad/edit-location/{{location.id}}"> {{location.site_name}} </a>
-        </li>  
-    {% endfor %}  
-</ul>
-
+<h1>Locations</h1>
+<div class="table-responsive">
+    <table class="table table-striped table-hover border-secondary">
+      <thead>
+        <tr>
+          <th scope="col">Site Name</th>
+          <th scope="col">City</th>
+          <th scope="col">State</th>
+        </tr>
+      </thead>
+    
+      <tbody>
+        {% for location in locations %}
+        <tr>
+          <th scope="row"><a href = "/ad/edit-location/{{location.id}}"> {{location.site_name}} </a></th>
+          <td>{{location.city}}</td>
+          <td>{{location.state}}</td>
+        </tr>
+        {% endfor %} 
+      </tbody>
+  
+    </table>
+  </div>
+  
+<a class="btn btn-primary" type="button" href = "/ad/add-location">Add Location</a>
 <a href = "/administrator" class = "btn btn-danger">Go Back</a>
 
 {% endblock %}
