@@ -8,10 +8,15 @@ from sqlalchemy.exc import IntegrityError
 from datetime import datetime, timedelta, date
 from flask_mail import Mail, Message
 from flask_bcrypt import Bcrypt
+import smtplib
+from email.message import EmailMessage
 
 bcrypt = Bcrypt()
 
 CURR_USER_KEY = "curr_user"
+EMAIL_ADDRESS = os.environ.get("EMAIL_USER")
+EMAIL_PASSWORD = os.environ.get("EMAIL_PASS")
+    
 
 app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = (os.environ.get("DATABASE_URL", "postgres:///mycerts"))
@@ -19,14 +24,6 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["SQLALCHEMY_ECHO"] = True
 app.config["DEBUG_TB_INTERCEPT_REDIRECTS"] = True
 app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "You can do this")
-app.config['MAIL_SERVER']='smtp.gmail.com'
-app.config['MAIL_PORT'] = 465
-#app.config['MAIL_USERNAME'] = 
-#app.config['MAIL_PASSWORD'] = 
-app.config['MAIL_USE_TLS'] = False
-app.config['MAIL_USE_SSL'] = True
-mail = Mail(app)
-
 
 connect_db(app)
 #db.drop_all()
@@ -115,10 +112,21 @@ def sign_up():
             flash("Email already in use", "danger")
             return render_template("sign-up.html", form = form)
         login(employee)
-        ### The server set up isn't working for this code yet... 
-        #msg = Message("Welcome!", recipients = ["jodyschaedel@gmail.com"])
-        #msg.body = "Welcome to MyCerts!"
-        #mail.send(msg)
+        msg = EmailMessage()
+        msg['Subject'] = "BLAH"
+        msg['From'] = EMAIL_ADDRESS
+        msg['To'] = f"{employee.email}"
+        msg.set_content('This is the plain text for the email')
+        msg.add_alternative("""\
+            <h1> Welcome to My Certs!</h1>
+                """, subtype = "html")
+
+        with smtplib.SMTP("smtp.gmail.com", 587) as smtp:
+            smtp.ehlo()
+            smtp.starttls()
+            smtp.ehlo()
+            smtp.login(EMAIL_ADDRESS, EMAIL_PASSWORD)
+            smtp.send_message(msg)
         return redirect (f"/mycerts/{employee.id}")
 
     else:   
@@ -167,9 +175,24 @@ def reset_password(employee_id):
 
         
         
-        flash("Now, reset your password", "success")
-        return redirect("/login")
+        flash("Your password has been reset", "success")
+        
+        msg = EmailMessage()
+        msg['Subject'] = "BLAH"
+        msg['From'] = EMAIL_ADDRESS
+        msg['To'] = f'{employee.email}'
+        msg.set_content('This is the plain text for the email')
+        msg.add_alternative("""\
+            <h1>Your Password has been reset! </h1>
+            """, subtype = "html")
 
+        with smtplib.SMTP("smtp.gmail.com", 587) as smtp:
+            smtp.ehlo()
+            smtp.starttls()
+            smtp.ehlo()
+            smtp.login(EMAIL_ADDRESS, EMAIL_PASSWORD)
+            smtp.send_message(msg)
+        return redirect("/login")
     else:
         return render_template("password.html", form=form)
 
@@ -189,7 +212,6 @@ def display_certs(employee_id):
     certs = employee_certification.query.filter_by(employee_id = employee_id).all()
     
     return render_template("users/display_cert.html", employee = employee, certs = certs)
-
 
 @app.route("/hours/<int:employee_id>")
 def display_hours(employee_id):
@@ -235,7 +257,6 @@ def show_all_information():
 
     
     return render_template("admin.html")
-
 
 @app.route("/employees")
 def show_all_employees():
@@ -346,7 +367,6 @@ def add_employee():
 
         return render_template("/admin/add_user.html", form = form)
 
-
 @app.route("/ad/add-cert", methods = ["GET", "POST"])
 def add_cert():
     """Setup a user for certs"""
@@ -381,7 +401,6 @@ def add_cert():
 
         return render_template("/admin/add_cert.html", form = form)
 
-
 @app.route("/ad/add-location", methods = ["GET", "POST"])
 def add_location():
     """Setup a user for certs"""
@@ -413,7 +432,6 @@ def add_location():
         return redirect("/administrator")
     else:
         return render_template("/admin/add_location.html", form = form)
-
 
 @app.route("/ad/add-training", methods = ["GET", "POST"])
 def add_training():
@@ -448,7 +466,6 @@ def add_training():
     else: 
 
         return render_template("/admin/add_training.html", form = form)
-
 
 @app.route("/ad/edit-user/<int:employee_id>", methods = ["GET", "POST"])
 def edit_employee(employee_id):
@@ -486,8 +503,6 @@ def edit_employee(employee_id):
 
         return render_template("/admin/edit_user.html", employee = employee, form = form)
 
-    
-
 @app.route("/ad/employee-certificaton/<int:employee_id>", methods = ["GET", "POST"])
 def edit_employee_certifications(employee_id):
     """Setup a user for certs"""
@@ -510,24 +525,39 @@ def edit_employee_certifications(employee_id):
     if form.validate_on_submit():
         
         cert = Cert.query.get(form.cert.data) 
+        #data = form.received.data
+        #received=employee_certification(received = data)
+        
+        #employee.certs.append(received)
         employee.certs.append(cert)
-        r = employee_certification(received = form.received.data)
-        employee.certs.append(r)
-        db.session.add(employee)
-        db.session.commit()
+        #db.session.add(employee)
         
-   
-        
+        #db.session.commit()
+
         if cert.expire:
+            received = form.received.data
+            year = received.year
+            month = received.month
+            day = received.day
 
-            delta_unit = cert.good_for_unit # the unit for the cert
-            delta_time = cert.good_for_time # the time for the cert
-            #due_date =date(form.received.data) + datedelta(days=30)
+            start_date = datetime(year = year, month = month, day = day)
+            change_unit = cert.good_for_unit
+            change_time = cert.good_for_time
+            
+            if change_unit == "days": 
+                delta = timedelta(days = change_time)
+            elif change_unit == "weeks":
+                delta = timedelta(days = change_time * 7)
+            elif change_unit == "months":
+                delta = timedelta(days = change_time * 30)
+            else:
+                delta = timedelta(days = change_time * 365)
+
+            due_date = start_date + delta
+            dates = employee_certification(received = received, due_date = due_date)
+        employee.certs.append(dates)
         
-        #employee.certs.due_date = due_date
-
-        #employee.certs.received = form.received.data
-
+        db.session.add(employee)
         db.session.commit()
     
         flash(f"{employee.first_name} {employee.last_name} has been saved", "success")
@@ -535,8 +565,6 @@ def edit_employee_certifications(employee_id):
     else:
 
         return render_template("/admin/employee_cert.html", employee = employee, form = form)
-
-
 
 @app.route("/ad/employee-location/<int:employee_id>", methods = ["GET", "POST"])
 def edit_employee_locations(employee_id):
@@ -570,9 +598,8 @@ def edit_employee_locations(employee_id):
         flash(f"{employee.first_name} {employee.last_name} has been saved", "success")
         return redirect("/administrator")
     else:
-        locations = employee_location.query.filter_by(employee = employee).all()
-        return render_template("/admin/employee_cert.html", employee = employee, form = form, locations = locations)
-
+        
+        return render_template("/admin/employee_cert.html", employee = employee, form = form)
 
 @app.route("/ad/edit-hours/<int:employee_id>", methods = ["GET", "POST"])
 def edit_employee_hours(employee_id):

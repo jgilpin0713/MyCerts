@@ -39,7 +39,7 @@ class Employee(db.Model):
     
     
     locations = db.relationship("Location", secondary = employee_location, cascade = "all, delete")
-    certs = db.relationship("Cert", secondary = "employee_certification", cascade = "all, delete")
+    certs = db.relationship("Cert", secondary = "employee_certification",  cascade = "all, delete")
 
     @classmethod
     def register(cls, username, password, email, first_name, last_name, hire_date, is_admin): ## do i need to add location and permissions?

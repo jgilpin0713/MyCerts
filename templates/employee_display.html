@@ -18,8 +18,14 @@
         <tr>
           <th scope="row"><a href = "/ad/edit-user/{{employee.id}}">{{employee.first_name}}</a></th>
           <td>{{employee.last_name}}</td>
-          <td>{{employee.locations.site_name}}</td>
           
+          <td>
+            <ul>
+              {% for location in employee.locations %}
+              <li> {{location.site_name}} </li>
+              {% endfor %}
+            </ul>
+          </td>
         </tr>
         {% endfor %} 
       </tbody>

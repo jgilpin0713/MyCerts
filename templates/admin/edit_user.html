@@ -3,7 +3,7 @@
 
 {% block content %}
 
-<h1> Edit {{employee.first_name}} {{employee.last_name}}</h1>
+
 
 <div class="container">
     <h1 class="display-1 text-center">Edit {{employee.first_name}} {{employee.last_name}}</h1>
@@ -23,11 +23,11 @@
         {% endfor %}
         </div>
         {% endfor %}
-        <button class ="btn btn-success btn-lg">Save</button>
-        <a href="/ad/employee-certificaton/{{employee.id}}" class="btn btn-danger btn-lg">Add Certification</a>
-        <a href="/ad/edit-hours/{{employee.id}}" class="btn btn-danger btn-lg">Edit Hours</a>
-        <a href="/ad/employee-location/{{employee.id}}" class="btn btn-danger btn-lg">Add Locations</a>
-        <a href="/administrator" class="btn btn-danger btn-lg">Go Back</a>
+        <button class ="btn btn-success">Save</button>
+        <a href="/ad/employee-certificaton/{{employee.id}}" class="btn btn-secondary">Add Certification</a>
+        <a href="/ad/edit-hours/{{employee.id}}" class="btn btn-secondary">Edit Hours</a>
+        <a href="/ad/employee-location/{{employee.id}}" class="btn btn-secondary">Add Locations</a>
+        <a href="/administrator" class="btn btn-danger">Go Back</a>
        </form>
       </div>
     </div>

@@ -4,3 +4,11 @@
     background-color: #8907b1;
 }
 
+body {
+    background: url('https://image.freepik.com/free-vector/white-abstract-background_23-2148810113.jpg') center top fixed;
+    -webkit-background-size: cover;
+    -moz-background-size: cover;
+    background-size: cover;
+    -o-background-size: cover;
+  }
+
