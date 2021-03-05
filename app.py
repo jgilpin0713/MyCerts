@@ -211,7 +211,9 @@ def display_certs(employee_id):
    
     certs = employee_certification.query.filter_by(employee_id = employee_id).all()
     
-    return render_template("users/display_cert.html", employee = employee, certs = certs)
+    all_certs = Cert.query.all()
+    
+    return render_template("users/display_cert.html", employee = employee, certs = certs, all_certs = all_certs)
 
 @app.route("/hours/<int:employee_id>")
 def display_hours(employee_id):
@@ -253,10 +255,10 @@ def show_all_information():
         flash ("Unauthorized", "danger")
         return redirect("/login")
 
-    ## What should go on this page.... Directions? Graph? Summary?
-
+    employees = Employee.query.all()
+    all_certs = employee_certification.query.all()
     
-    return render_template("admin.html")
+    return render_template("admin.html", employees = employees, all_certs = all_certs)
 
 @app.route("/employees")
 def show_all_employees():
@@ -269,6 +271,7 @@ def show_all_employees():
         return redirect("/login")
 
     employees = Employee.query.all()
+    
       
     ## right now this is ALL users... 
     
@@ -385,7 +388,7 @@ def add_cert():
         cert = Cert(
             cert_name = form.cert_name.data,
             hours = form.hours.data,
-            required = form.required.data,
+            is_required = form.is_required.data,
             expire = form.expire.data,
             good_for_time = form.good_for_time.data,
             good_for_unit = form.good_for_unit.data,
@@ -525,14 +528,7 @@ def edit_employee_certifications(employee_id):
     if form.validate_on_submit():
         
         cert = Cert.query.get(form.cert.data) 
-        #data = form.received.data
-        #received=employee_certification(received = data)
         
-        #employee.certs.append(received)
-        employee.certs.append(cert)
-        #db.session.add(employee)
-        
-        #db.session.commit()
 
         if cert.expire:
             received = form.received.data
@@ -554,10 +550,12 @@ def edit_employee_certifications(employee_id):
                 delta = timedelta(days = change_time * 365)
 
             due_date = start_date + delta
-            dates = employee_certification(received = received, due_date = due_date)
-        employee.certs.append(dates)
+            employees = employee_certification(employee_id = employee_id, cert_id = cert.id, received = received, due_date = due_date)
         
-        db.session.add(employee)
+        #cert.employees.append(employee))
+        #db.session.add(cert)
+        #employee.certs.append(dates)
+        db.session.add(employees)
         db.session.commit()
     
         flash(f"{employee.first_name} {employee.last_name} has been saved", "success")
@@ -647,7 +645,7 @@ def edit_cert(cert_id):
     if form.validate_on_submit():
         cert.cert_name = form.cert_name.data
         cert.hours = form.hours.data
-        cert.required = form.required.data
+        cert.is_required = form.is_required.data
         cert.expire = form.expire.data
         cert.good_for_time = form.good_for_time.data
         cert.good_for_unit = form.good_for_unit.data
@@ -713,13 +711,6 @@ def edit_training(training_id):
 
     else:
         return render_template("/admin/edit_training.html", form = form, training = training)
-
-
-#@app.teardown_request
-#def teardown_request(exception):
-#    if exception:
-#        db.session.rollback()
-#    db.session.remove()
 
 @app.errorhandler(404)
 def not_found(error):

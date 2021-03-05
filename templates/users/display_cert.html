@@ -8,18 +8,6 @@
 <h1>Welcome {{employee.first_name}} {{employee.last_name}}!!</h1>
 
 
-{{employee.username}}
-{{employee.email}}
-{{employee.hire_date}}
-{{employee.is_admin}}
-
-{{employee.locations.site_name}}
-
-{{employee.certs.cert_name}}
-
-{{employee.completed}}
-{{employee.required}}
-
 <div class="table-responsive">
     <table class="table table-striped table-hover border-secondary">
       <thead>
@@ -32,9 +20,9 @@
       <tbody>
         {% for cert in certs %}
         <tr>
-          <td>{{cert.cert_name}}</td>
-          <td>{{emp.received}}}</td>
-          <td>{{emp.due_date}}</td>
+          <td>{{all_certs[cert.id - 1].cert_name}} </td>
+          <td>{{cert.received}}</td>
+          <td>{{cert.due_date}}</td>
         </tr>
         {% endfor %}
       </tbody>

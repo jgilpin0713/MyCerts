@@ -69,14 +69,31 @@
             </tr>
           </thead>
           <tbody>
+            {% for employee in employees %}
             <tr>
-              <td>1,001</td>
-              <td>random</td>
-              <td>data</td>
-              <td>placeholder</td>
-              
+              <td>{{employee.first_name}} {{employee.last_name}}</td>
+              <td>
+                <ul>
+                  {% for cert in employee.certs %}
+                  <li> {{cert.cert_name}} </li>
+                  {% endfor %}
+              </ul>
+            </td>
+              <td>
+                <ul>
+                   <li> {{all_certs[employee.id-1].due_date}} </li>
+              </ul>
+            </td>
+
+              <td>
+                <ul>
+                {% for location in employee.locations %}
+                <li> {{location.site_name}} </li>
+                {% endfor %}
+              </ul>
+            </td>
             </tr>
-            
+            {% endfor %}
           </tbody>
         </table>
       </div>

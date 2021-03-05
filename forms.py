@@ -30,7 +30,7 @@ class Cert_Form(FlaskForm):
     
     cert_name = StringField("Name of Certification", validators=[InputRequired()])
     hours = IntegerField("How many hours", validators = [InputRequired()])
-    required = BooleanField("Is this Certification required?")
+    is_required = BooleanField("Is this Certification required?")
     expire = BooleanField("Does this certification expire?")
     good_for_time = IntegerField("How long is this certification good for?", validators=[Optional()])
     good_for_unit = RadioField("Select the appropriate length", validators = [Optional()], choices = ["days", "weeks", "months", "years"]) ## choices are days, months, years
